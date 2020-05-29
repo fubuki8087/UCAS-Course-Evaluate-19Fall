@@ -4,76 +4,43 @@
 import requests
 import re
 import time
-from PIL import Image
-from io import BytesIO
-import matplotlib.pyplot as plt 
+import json
 from bs4 import BeautifulSoup
-# 请求头信息
 
-headers = {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-    'Accept-Encoding':'gzip, deflate',
-    'Accept-Language': 'en',
-    'Cache-Control': 'max-age=0',
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'DNT':'1',
-    'Host':'sep.ucas.ac.cn',
-    'Origin': 'http://sep.ucas.ac.cn',
-    'Referer': 'http://sep.ucas.ac.cn/',
-    'Upgrade-Insecure-Requests': '1',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36',
+onestop_data = {'username': 'Your user name', # 填入用户名
+                'password': 'Your password', # 填入密码
+                'remember': 'checked'}
+
+# ------------------- login onestop -------------------------
+onestop_link = "http://onestop.ucas.ac.cn/Ajax/Login/0"
+
+headers = { # 请求头信息
+    'X-Requested-With': 'XMLHttpRequest'
 }
 
-regex = re.compile(r"'(.*?)'")
+o = requests.Session()
+Onestop_Login = o.post(url = onestop_link, data = onestop_data, headers = headers, verify=False, timeout=10)
+res = json.loads(Onestop_Login.text)
 
-sep_link = "http://sep.ucas.ac.cn/slogin"
-
-params_nocode = {'userName':'Your User Name', # 填入用户名
-          'pwd':'Your password', #填入密码
-          'sb':'sb'}
-
-
-params_withcode = {'userName':'Your User Name',#填入用户名
-          'pwd':'Your password', #填入密码
-          'certCode': '',
-          'sb':'sb'}
-
-
-def localtime():
-    return time.asctime( time.localtime(time.time()) )
-
-
-
-s = requests.Session()
-c = requests.Session()
+if (res['f'] == False): # check login status
+    raise Exception(res['msg'])
+else:
+    print("ONESTOP LOGIN SUCCESS")
+# -------------------------------------------------------
 
 # ------------------- login sep -------------------------
 s = requests.Session()
-Sep_Login = s.post(url=sep_link, data=params_nocode,headers=headers,verify=False,timeout=10) # login
+Sep_Login = s.get(url=res['msg'],verify=False,timeout=10) # login
 sl = BeautifulSoup(Sep_Login.text, 'lxml')
 
-if (sl.find('input', attrs={'name':'certCode'}) !=None):  # verCode needed
-    vpic = s.get('http://sep.ucas.ac.cn/changePic?code='+str(int(round(time.time() * 1000))))
-    image = Image.open(BytesIO(vpic.content))
-    #image.show()
-    plt.imshow(image)
-    plt.show()
-    
-    #SendEmail(' 需要登录验证码 ','000')
-    vcode = input()
-    
-    
-    params_withcode['certCode'] = vcode
-    Sep_Login = s.post(url=sep_link, data=params_withcode,headers=headers,verify=False,timeout=10) 
-    sl = BeautifulSoup(Sep_Login.text, 'lxml')
 
 if (sl.find('a',title='退出系统') == None): # check login status
     raise Exception("Sep Login Error")
 else:
-    print(" SEP LOGIN SUCCESS")
+    print("SEP LOGIN SUCCESS")
 # -------------------------------------------------------
 
-# -------------------  login jwxk ------------------------ 
+# -------------------  login jwxk -----------------------
 jwxk = s.get('http://sep.ucas.ac.cn/portal/site/226/821')
 jwxk = BeautifulSoup(jwxk.text, 'lxml')
 j_link = jwxk.noscript.meta.attrs['content'][6:]
@@ -83,88 +50,102 @@ j_login = c.get(url=j_link,cookies = s.cookies.get_dict())
 requests.utils.add_dict_to_cookiejar(c.cookies, {'sepuser': s.cookies.get_dict()['sepuser']}) # set jwxk cookies
 # -------------------------------------------------------
 
-
-# ----------------- Evaluate Course ---------------------
 cdata = { # Post Data
-    'subjectiveRadio': 22,
-    'subjectiveCheckbox': 28,
-    'item_2': 5,
-    'item_3': 5,
-    'item_67': 5,
-    'item_5': 5,
-    'item_6': 5,
-    'item_7': 5,
-    'item_68': 5,
-    'item_69': 5,
-    'item_71': 5,
-    'item_72': 5,
-    'item_73': 5,
-    'item_74': 5,
-    'item_75': 5,
-    'item_77': 5,
-    'item_78': 5,
-    'item_79': 5,
-    'item_80': 5,
-    'item_81': 5,
-    'item_83': 5,
-    'item_84': 5,
-    'item_85': 5,
-    'item_86': 5,
-    'item_14': '作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
-    'item_15': '作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
-    'item_16': '作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
-    'item_17': '作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
-    'item_18': '作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
-    'radio_19': '',
-    'item_25': ''
+    'subjectiveRadio': 103,
+    'subjectiveCheckbox': '110,',
+    'item_88': 5,
+    'item_89': 5,
+    'item_90': 5,
+    'item_92': 5,
+    'item_93': 5,
+    'item_94': 5,
+    'item_95': 5,
+    'item_96': 5,
+    'item_116': 5,
+    'item_117': 5,
+    'item_118': 5,
+    'item_119': 5,
+    'item_120': 5,
+    'item_122': 5,
+    'item_123': 5,
+    'item_124': 5,
+    'item_125': 5,
+    'item_126': 5,
+    'item_128': 5,
+    'item_129': 5,
+    'item_130': 5,
+    'item_131': 5,
+    'item_97': '课程与作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
+    'item_98': '课程与作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
+    'item_99': '课程与作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
+    'item_100': '课程与作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
+    'item_101': '课程与作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
+    'radio_102': '103',
+    'item_108': '110,'
 }
 tdata = {
-    'item_34': 5,
-    'item_35': 5,
-    'item_37': 5,
-    'item_38': 5,
-    'item_40': 5,
-    'item_41': 5,
-    'item_42': 5,
-    'item_43': '作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
-    'item_44': '作业（包括作业、报告、测验测试、论文等）有助于我的能力的提高',
-    'item_48': 5,
-    'item_49': 5,
-    'item_50': 5,
-    'item_52': 5,
-    'item_53': 5,
-    'item_54': 5,
-    'item_55': 5,
-    'item_56': 5,
-    'item_60': 5,
-    'item_62': 5,
-    'item_63': 5,
-    'item_64': 5,
-    'item_65': 5,
-    'item_66': 5,
+    'subjectiveRadio': '',
     'subjectiveCheckbox': '',
-    'subjectiveRadio': ''
+    'item_133': 5,
+    'item_134': 5,
+    'item_136': 5,
+    'item_137': 5,
+    'item_139': 5,
+    'item_140': 5,
+    'item_141': 5,
+    'item_142': 5,
+    'item_143': 5,
+    'item_144': 5,
+    'item_148': 5,
+    'item_149': 5,
+    'item_150': 5,
+    'item_151': 5,
+    'item_152': 5,
+    'item_153': 5,
+    'item_155': 5,
+    'item_156': 5,
+    'item_157': 5,
+    'item_158': 5,
+    'item_159': 5,
+    'item_145': '治学严谨、备课充分、讲课认真、因材施教',
+    'item_146': '治学严谨、备课充分、讲课认真、因材施教'
 }
 
-EvaPage = c.get("http://jwxk.ucas.ac.cn/evaluate/course/59585")
 
+# ----------------  Course Evaluation -------------------
+print('Course Evaluation')
+EvaPage = c.get("http://jwxk.ucas.ac.cn/evaluate/course/59586")
 eva = BeautifulSoup(EvaPage.text, 'lxml')
-
 hrefnum = re.compile(r"(\d+)")
-for a in eva.find_all('a', string='评估', href=True):
-    CourseNum = hrefnum.findall(a['href'])[0]
-    res = c.post("http://jwxk.ucas.ac.cn/evaluate/saveCourseEval/" + CourseNum,data = cdata)
-    print(CourseNum)
-    time.sleep(1)
 
-EvaPage = c.get("http://jwxk.ucas.ac.cn/evaluate/teacher/59585")
-
+for row in eva.find_all('tr'): 
+    rowa = row.find_all('a')
+    if (len(rowa) < 4): continue
+    href = rowa[3].get('href')
+    rowstr = list(map(lambda x: x.string, rowa))
+    if (rowstr[3] == '评估'):
+        CourseNum = hrefnum.findall(href)[0]
+        res = c.post("https://jwxk.ucas.ac.cn/evaluate/saveCourseEval/" + CourseNum, data = cdata)
+        print(rowstr[0:4])
+        time.sleep(1)
+print('Done')
+    
+    
+# ----------------  Teacher Evaluation -------------------
+print('Teacher Evaluation')
+EvaPage = c.get("http://jwxk.ucas.ac.cn/evaluate/teacher/59586")
 eva = BeautifulSoup(EvaPage.text, 'lxml')
-
 hrefnum = re.compile(r"(\d+)")
-for a in eva.find_all('a', string='评估', href=True):
-    CourseNum = hrefnum.findall(a['href'])[0]
-    TeacherNum = hrefnum.findall(a['href'])[1]
-    res = c.post("http://jwxk.ucas.ac.cn/evaluate/saveTeacherEval/" + CourseNum + '/' + TeacherNum,data = tdata)
-    print(CourseNum, TeacherNum)
-    time.sleep(1)
+
+for row in eva.find_all('tr'): 
+    rowa = row.find_all('a')
+    if (len(rowa) < 4): continue
+    href = rowa[3].get('href')
+    rowstr = list(map(lambda x: x.string, rowa))
+    if (rowstr[3] == '评估'):
+        CourseNum = hrefnum.findall(href)[0]
+        TeacherNum = hrefnum.findall(href)[1]
+        res = c.post("https://jwxk.ucas.ac.cn/evaluate/saveTeacherEval/" + CourseNum + '/' + TeacherNum, data = tdata)
+        print(rowstr[0:4])
+        time.sleep(1)
+print('Done')
